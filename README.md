@@ -6,6 +6,8 @@ This document describes the complete backend architecture, workflows, RBAC struc
 
 ---
 
+![Swagger UI](./screenshots/SwaggerUI.png)
+
 # Technology Stack
 
 | Layer               | Technology                       |
