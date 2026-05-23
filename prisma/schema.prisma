@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model approvals {
+  id           BigInt     @id @default(autoincrement())
+  timesheet_id BigInt
+  manager_id   BigInt
+  status       String?    @default("PENDING") @db.VarChar(20)
+  comments     String?
+  action_at    DateTime?  @db.Timestamp(6)
+  created_at   DateTime?  @default(now()) @db.Timestamp(6)
+  users        users      @relation(fields: [manager_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_approval_manager")
+  timesheets   timesheets @relation(fields: [timesheet_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_approval_timesheet")
+
+  @@index([status], map: "idx_approval_status")
+}
+
+model audit_logs {
+  id          BigInt    @id @default(autoincrement())
+  user_id     BigInt?
+  action      String    @db.VarChar(255)
+  entity_name String?   @db.VarChar(100)
+  entity_id   BigInt?
+  old_value   Json?
+  new_value   Json?
+  ip_address  String?   @db.VarChar(100)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  users       users?    @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_audit_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model leave_requests {
+  id                                      BigInt    @id @default(autoincrement())
+  user_id                                 BigInt
+  leave_type                              String?   @db.VarChar(20)
+  start_date                              DateTime  @db.Date
+  end_date                                DateTime  @db.Date
+  reason                                  String?
+  status                                  String?   @default("PENDING") @db.VarChar(20)
+  approved_by                             BigInt?
+  created_at                              DateTime? @default(now()) @db.Timestamp(6)
+  users_leave_requests_approved_byTousers users?    @relation("leave_requests_approved_byTousers", fields: [approved_by], references: [id], onUpdate: NoAction, map: "fk_leave_approved_by")
+  users_leave_requests_user_idTousers     users     @relation("leave_requests_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_leave_user")
+}
+
+model notifications {
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
+  title      String    @db.VarChar(255)
+  message    String?
+  is_read    Boolean?  @default(false)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notification_user")
+
+  @@index([user_id], map: "idx_notification_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model projects {
+  id            BigInt          @id @default(autoincrement())
+  project_code  String          @unique @db.VarChar(50)
+  project_name  String          @db.VarChar(200)
+  client_name   String?         @db.VarChar(200)
+  description   String?
+  start_date    DateTime?       @db.Date
+  end_date      DateTime?       @db.Date
+  status        String?         @default("ACTIVE") @db.VarChar(20)
+  created_at    DateTime?       @default(now()) @db.Timestamp(6)
+  created_by    BigInt?
+  users         users?          @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  timesheets    timesheets[]
+  user_projects user_projects[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model timesheets {
+  id               BigInt      @id @default(autoincrement())
+  user_id          BigInt
+  project_id       BigInt
+  work_date        DateTime    @db.Date
+  hours_worked     Decimal?    @db.Decimal(4, 2)
+  task_description String?
+  status           String?     @default("DRAFT") @db.VarChar(20)
+  submitted_at     DateTime?   @db.Timestamp(6)
+  created_at       DateTime?   @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?   @default(now()) @db.Timestamp(6)
+  approvals        approvals[]
+  projects         projects    @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_timesheet_project")
+  users            users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_timesheet_user")
+
+  @@index([work_date], map: "idx_timesheet_date")
+  @@index([project_id], map: "idx_timesheet_project")
+  @@index([user_id], map: "idx_timesheet_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model user_projects {
+  id                    BigInt    @id @default(autoincrement())
+  user_id               BigInt
+  project_id            BigInt
+  allocation_percentage Decimal?  @db.Decimal(5, 2)
+  assigned_at           DateTime? @default(now()) @db.Timestamp(6)
+  projects              projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_up_project")
+  users                 users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_up_user")
+
+  @@unique([user_id, project_id], map: "uq_user_project")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id                                               BigInt           @id @default(autoincrement())
+  employee_code                                    String           @unique @db.VarChar(50)
+  first_name                                       String           @db.VarChar(100)
+  last_name                                        String?          @db.VarChar(100)
+  email                                            String           @unique @db.VarChar(150)
+  password                                         String           @db.VarChar(255)
+  role                                             String?          @default("EMPLOYEE") @db.VarChar(20)
+  manager_id                                       BigInt?
+  is_active                                        Boolean?         @default(true)
+  created_at                                       DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at                                       DateTime?        @default(now()) @db.Timestamp(6)
+  approvals                                        approvals[]
+  audit_logs                                       audit_logs[]
+  leave_requests_leave_requests_approved_byTousers leave_requests[] @relation("leave_requests_approved_byTousers")
+  leave_requests_leave_requests_user_idTousers     leave_requests[] @relation("leave_requests_user_idTousers")
+  notifications                                    notifications[]
+  projects                                         projects[]
+  timesheets                                       timesheets[]
+  user_projects                                    user_projects[]
+  users                                            users?           @relation("usersTousers", fields: [manager_id], references: [id], onUpdate: NoAction, map: "fk_users_manager")
+  other_users                                      users[]          @relation("usersTousers")
+
+  @@index([email], map: "idx_users_email")
+}
