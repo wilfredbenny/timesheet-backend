@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Post, Req, UseGuards } from '@nestjs/common';
 
 import { AuthGuard } from '@nestjs/passport';
 
@@ -29,6 +29,11 @@ export class ProjectsController {
     @Req()
     req: any,
   ) {
+    if (req.user.role !== 'ADMIN' && req.user.role !== 'MANAGER') {
+          throw new ForbiddenException(
+            'Only ADMIN/MANAGER can create projects'
+          );
+        }
     return this.projectsService.create(createProjectDto, req.user.userId);
   }
 }
