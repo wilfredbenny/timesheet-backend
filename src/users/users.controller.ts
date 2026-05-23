@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Controller, ForbiddenException, Get, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Body, Post } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -23,7 +23,15 @@ export class UsersController {
   }
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
+  create(
+    @Req() req: any,
+    @Body() createUserDto: CreateUserDto
+  ) {
+    if (req.user.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'Only ADMIN can create users'
+      );
+    }
     return this.usersService.create(createUserDto);
   }
 }
