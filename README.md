@@ -6,7 +6,18 @@ This document describes the complete backend architecture, workflows, RBAC struc
 
 ---
 
-![Swagger UI](./screenshots/SwaggerUI.png)
+## API Testing & Documentation
+
+<table>
+  <tr>
+    <td>
+      <img src="./screenshots/SwaggerUI.png" alt="Swagger UI" width="500"/>
+    </td>
+    <td>
+      <img src="./screenshots/Postman.png" alt="Postman Collection" width="500"/>
+    </td>
+  </tr>
+</table>
 
 # Technology Stack
 
