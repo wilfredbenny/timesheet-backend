@@ -25,7 +25,7 @@ This document describes the complete backend architecture, workflows, RBAC struc
 | ------------------- | -------------------------------- |
 | Backend Framework   | NestJS                           |
 | ORM                 | Prisma ORM                       |
-| Database            | MySQL                            |
+| Database            | PostgreSQL                            |
 | Authentication      | JWT Authentication               |
 | Authorization       | RBAC (Role Based Access Control) |
 | API Documentation   | Swagger UI                       |
